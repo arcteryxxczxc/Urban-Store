@@ -1,0 +1,11 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-WTF==1.1.1
+Flask-Login==0.6.2
+Werkzeug==2.3.6
+WTForms==3.0.1
+# Для хеширования паролей
+bcrypt==4.0.1
+
+# (Опционально) Если планируешь миграции
+Flask-Migrate==4.0.4
