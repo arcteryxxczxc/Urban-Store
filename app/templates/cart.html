@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Моя корзина</h2>
+{% if cart_items %}
+<table>
+  <tr>
+    <th>Товар</th>
+    <th>Цена</th>
+    <th>Количество</th>
+    <th>Всего</th>
+    <th>Действие</th>
+  </tr>
+  {% for item in cart_items %}
+  <tr>
+    <td>{{ item.product.name }}</td>
+    <td>{{ item.product.price }}</td>
+    <td>{{ item.quantity }}</td>
+    <td>{{ item.product.price * item.quantity }}</td>
+    <td>
+      <form method="POST" action="{{ url_for('main_bp.remove_from_cart', cart_item_id=item.id) }}">
+        <button type="submit">Удалить</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<p>Общая сумма: {{ total }} руб.</p>
+<a href="#">Оформить заказ</a>
+{% else %}
+<p>Корзина пуста.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Список товаров</h2>
+<form method="GET" action="{{ url_for('main_bp.product_list') }}">
+    <select name="category">
+        <option value="">Все категории</option>
+        <option value="chair">Стулья</option>
+        <option value="table">Столы</option>
+        <option value="sofa">Диваны</option>
+    </select>
+    <select name="sort_by">
+        <option value="">Без сортировки</option>
+        <option value="price">По цене</option>
+        <option value="rating">По рейтингу</option>
+        <option value="created">По дате добавления</option>
+    </select>
+    <button type="submit">Применить</button>
+</form>
+
+{% if products %}
+<ul>
+  {% for product in products %}
+    <li>
+      <a href="{{ url_for('main_bp.product_detail', product_id=product.id) }}">
+        {{ product.name }} - {{ product.price }} руб.
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>Нет товаров.</p>
+{% endif %}
+{% endblock %}

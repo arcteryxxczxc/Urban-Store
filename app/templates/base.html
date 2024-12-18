@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Furniture Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('main_bp.index') }}">Главная</a>
+        <a href="{{ url_for('main_bp.product_list') }}">Товары</a>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('main_bp.cart') }}">Корзина</a>
+            <a href="{{ url_for('main_bp.logout') }}">Выйти ({{ current_user.username }})</a>
+            {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('admin_bp.dashboard') }}">Админ-панель</a>
+            {% endif %}
+        {% else %}
+            <a href="{{ url_for('main_bp.login') }}">Вход</a>
+            <a href="{{ url_for('main_bp.register') }}">Регистрация</a>
+        {% endif %}
+    </nav>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul>
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>
