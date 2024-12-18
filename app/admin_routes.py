@@ -100,3 +100,17 @@ def update_order_status(order_id):
     db.session.commit()
     flash('Статус заказа обновлён.')
     return redirect(url_for('admin_bp.admin_orders'))
+
+@admin_bp.route('/reports/orders')
+@login_required
+@admin_required
+def order_reports():
+    orders = Order.query.all()
+    return render_template('admin_order_reports.html', orders=orders)
+
+@admin_bp.route('/reports/products')
+@login_required
+@admin_required
+def product_reports():
+    products = Product.query.all()
+    return render_template('admin_product_reports.html', products=products)

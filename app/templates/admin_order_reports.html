@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Отчёты по заказам</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Пользователь</th>
+        <th>Статус</th>
+        <th>Сумма</th>
+    </tr>
+    {% for order in orders %}
+    <tr>
+        <td>{{ order.id }}</td>
+        <td>{{ order.user.username }}</td>
+        <td>{{ order.status }}</td>
+        <td>{{ order.total }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

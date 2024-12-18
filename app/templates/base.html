@@ -10,11 +10,14 @@
         <a href="{{ url_for('main_bp.index') }}">Главная</a>
         <a href="{{ url_for('main_bp.product_list') }}">Товары</a>
         {% if current_user.is_authenticated %}
-            <a href="{{ url_for('main_bp.cart') }}">Корзина</a>
-            <a href="{{ url_for('main_bp.logout') }}">Выйти ({{ current_user.username }})</a>
             {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('admin_bp.dashboard') }}">Админ-панель</a>
+            {% else %}
+                <a href="{{ url_for('main_bp.cart') }}">Корзина</a>
+                <a href="{{ url_for('main_bp.my_orders') }}">Мои заказы</a>
+                <a href="{{ url_for('main_bp.favorites_list') }}">Избранное</a>
             {% endif %}
+            <a href="{{ url_for('main_bp.logout') }}">Выйти ({{ current_user.username }})</a>
         {% else %}
             <a href="{{ url_for('main_bp.login') }}">Вход</a>
             <a href="{{ url_for('main_bp.register') }}">Регистрация</a>
@@ -35,6 +38,6 @@
         {% block content %}{% endblock %}
     </div>
     
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

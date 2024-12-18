@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import db
-from .models import User, Product, CartItem, favorites, Review
+from .models import User, Product, CartItem, favorites, Review, Order, OrderItem
 from .forms import RegistrationForm, LoginForm
 
 main_bp = Blueprint('main_bp', __name__)
@@ -26,9 +26,19 @@ def register():
             return redirect(url_for('main_bp.register'))
         
         hashed_pwd = generate_password_hash(form.password.data)
-        new_user = User(username=form.username.data,
-                        email=form.email.data,
-                        password_hash=hashed_pwd)
+        new_user = User(
+            username=form.username.data,
+            email=form.email.data,
+            password_hash=hashed_pwd
+        )
+
+        # Проверим, есть ли уже админ в системе
+        admin_exists = User.query.filter_by(role='admin').first()
+        if not admin_exists:
+            # Если админов нет, этот пользователь станет админом
+            new_user.role = 'admin'
+            flash('Так как администраторов не было, вы назначены администратором.')
+
         db.session.add(new_user)
         db.session.commit()
         flash('Регистрация прошла успешно. Можете войти.')
@@ -60,27 +70,73 @@ def logout():
 # ------------------------------------------------
 @main_bp.route('/products')
 def product_list():
-    category = request.args.get('category')
+    # Получение всех уникальных категорий, цветов и материалов из базы данных
+    categories = db.session.query(Product.category).distinct().all()
+    categories = [c[0] for c in categories if c[0]]
+
+    colors = db.session.query(Product.color).distinct().all()
+    colors = [c[0] for c in colors if c[0]]
+
+    materials = db.session.query(Product.material).distinct().all()
+    materials = [m[0] for m in materials if m[0]]
+
+    # Получение параметров фильтра из GET-запроса
+    selected_category = request.args.get('category')
+    selected_color = request.args.get('color')
+    selected_material = request.args.get('material')
+    price_min = request.args.get('price_min', type=float)
+    price_max = request.args.get('price_max', type=float)
     sort_by = request.args.get('sort_by')
-    
+
     query = Product.query
-    if category:
-        query = query.filter_by(category=category)
+
+    # Применение фильтров
+    if selected_category:
+        query = query.filter_by(category=selected_category)
+    if selected_color:
+        query = query.filter_by(color=selected_color)
+    if selected_material:
+        query = query.filter_by(material=selected_material)
+    if price_min is not None:
+        query = query.filter(Product.price >= price_min)
+    if price_max is not None:
+        query = query.filter(Product.price <= price_max)
+
+    # Применение сортировки
     if sort_by == 'price':
         query = query.order_by(Product.price)
     elif sort_by == 'rating':
         query = query.order_by(Product.rating.desc())
     elif sort_by == 'created':
         query = query.order_by(Product.created_at.desc())
-    
+
     products = query.all()
-    return render_template('product_list.html', products=products)
+
+    # Передача данных в шаблон
+    return render_template('product_list.html', 
+                           products=products,
+                           categories=categories,
+                           colors=colors,
+                           materials=materials,
+                           selected_category=selected_category,
+                           selected_color=selected_color,
+                           selected_material=selected_material,
+                           price_min=price_min,
+                           price_max=price_max,
+                           sort_by=sort_by)
+
 
 @main_bp.route('/product/<int:product_id>')
 def product_detail(product_id):
     product = Product.query.get_or_404(product_id)
     reviews = Review.query.filter_by(product_id=product_id).all()
-    return render_template('product_detail.html', product=product, reviews=reviews)
+    # Средний рейтинг
+    from sqlalchemy import func
+    avg_rating = db.session.query(func.avg(Review.rating)).filter(Review.product_id == product_id).scalar()
+    if avg_rating is None:
+        avg_rating = 0  # Если нет отзывов, рейтинг 0 или не показывать
+
+    return render_template('product_detail.html', product=product, reviews=reviews, avg_rating=avg_rating)
 
 # ------------------------------------------------
 # Корзина покупок (Cart)
@@ -139,11 +195,12 @@ def add_favorite(product_id):
 @main_bp.route('/favorites')
 @login_required
 def favorites_list():
-    user = User.query.get(current_user.id)
-    # relation "favorites" через secondary таблицу
-    # Но у нас таблица без модели, поэтому сделаем ручной запрос
-    user_favorites = Product.query.join(favorites, Product.id == favorites.c.product_id).filter(favorites.c.user_id == user.id).all()
-    return render_template('product_list.html', products=user_favorites)
+    # Текущий пользователь
+    user_favorites = Product.query.join(
+        favorites, Product.id == favorites.c.product_id
+    ).filter(favorites.c.user_id == current_user.id).all()
+
+    return render_template('favorites.html', products=user_favorites)
 
 # ------------------------------------------------
 # Отзывы (Reviews)
@@ -151,10 +208,128 @@ def favorites_list():
 @main_bp.route('/review/<int:product_id>', methods=['POST'])
 @login_required
 def add_review(product_id):
-    rating = int(request.form.get('rating', 5))
+    rating = request.form.get('rating', type=int)
     comment = request.form.get('comment', '')
+    if rating < 1 or rating > 5:
+        flash('Рейтинг должен быть от 1 до 5.')
+        return redirect(url_for('main_bp.product_detail', product_id=product_id))
+
+    # Проверим, оставлял ли пользователь уже отзыв (не обязательно, но можно)
+    existing_review = Review.query.filter_by(product_id=product_id, user_id=current_user.id).first()
+    if existing_review:
+        flash('Вы уже оставляли отзыв для этого товара.')
+        return redirect(url_for('main_bp.product_detail', product_id=product_id))
+
     new_review = Review(product_id=product_id, user_id=current_user.id, rating=rating, comment=comment)
     db.session.add(new_review)
     db.session.commit()
-    flash('Отзыв добавлен.')
+    flash('Отзыв добавлен!')
     return redirect(url_for('main_bp.product_detail', product_id=product_id))
+
+@main_bp.route('/checkout', methods=['POST'])
+@login_required
+def checkout():
+    # Получаем все товары в корзине
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    if not cart_items:
+        flash('Невозможно оформить пустой заказ.')
+        return redirect(url_for('main_bp.cart'))
+
+    # Создаём новый заказ
+    new_order = Order(user_id=current_user.id, status='processing')
+    db.session.add(new_order)
+    db.session.commit()  # Сначала коммитим, чтобы получить ID заказа
+
+    # Добавляем товары в OrderItem
+    for item in cart_items:
+        order_item = OrderItem(
+            order_id=new_order.id,
+            product_id=item.product_id,
+            quantity=item.quantity,
+            price=item.product.price
+        )
+        db.session.add(order_item)
+
+    # Очищаем корзину
+    for item in cart_items:
+        db.session.delete(item)
+
+    db.session.commit()
+
+    flash(f'Заказ #{new_order.id} оформлен успешно!')
+    # Можно перенаправить на страницу с заказами пользователя
+    return redirect(url_for('main_bp.my_orders'))
+@main_bp.route('/my_orders')
+@login_required
+def my_orders():
+    user_orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
+    return render_template('my_orders.html', orders=user_orders)
+@main_bp.route('/cart/update_quantity', methods=['POST'])
+@login_required
+def update_quantity():
+    data = request.get_json()
+    cart_item_id = data.get('cart_item_id')
+    new_quantity = data.get('quantity')
+
+    cart_item = CartItem.query.filter_by(id=cart_item_id, user_id=current_user.id).first()
+    if not cart_item:
+        return jsonify({'success': False, 'error': 'Item not found'}), 404
+
+    if new_quantity < 1:
+        return jsonify({'success': False, 'error': 'Invalid quantity'}), 400
+
+    cart_item.quantity = new_quantity
+    db.session.commit()
+
+    # Пересчитываем стоимость позиции и общей суммы
+    item_total = cart_item.product.price * cart_item.quantity
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    total = sum(i.product.price * i.quantity for i in cart_items)
+
+    return jsonify({'success': True, 'item_total': item_total, 'total': total})
+
+
+@main_bp.route('/cart/remove_item', methods=['POST'])
+@login_required
+def remove_item():
+    data = request.get_json()
+    cart_item_id = data.get('cart_item_id')
+
+    cart_item = CartItem.query.filter_by(id=cart_item_id, user_id=current_user.id).first()
+    if not cart_item:
+        return jsonify({'success': False, 'error': 'Item not found'}), 404
+
+    db.session.delete(cart_item)
+    db.session.commit()
+
+    # Пересчитываем общую сумму
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    total = sum(i.product.price * i.quantity for i in cart_items)
+
+    return jsonify({'success': True, 'total': total})
+
+@main_bp.route('/remove_favorite/<int:product_id>', methods=['POST'])
+@login_required
+def remove_favorite(product_id):
+    # Проверяем, существует ли продукт
+    product = Product.query.get_or_404(product_id)
+
+    # Проверяем, есть ли продукт в избранном
+    user_favorites = Product.query.join(
+        favorites, Product.id == favorites.c.product_id
+    ).filter(favorites.c.user_id == current_user.id, Product.id == product_id).first()
+
+    if user_favorites:
+        # Удаляем из избранного
+        db.session.execute(
+            favorites.delete().where(
+                (favorites.c.user_id == current_user.id) & 
+                (favorites.c.product_id == product_id)
+            )
+        )
+        db.session.commit()
+        flash(f'Товар "{product.name}" удалён из избранного.')
+    else:
+        flash('Этот товар не найден в вашем избранном.')
+
+    return redirect(url_for('main_bp.favorites_list'))

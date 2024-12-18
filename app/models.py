@@ -2,9 +2,13 @@ from . import db
 from flask_login import UserMixin
 from datetime import datetime
 
-# -------------------------------------------------------------------
-# Модель пользователя
-# -------------------------------------------------------------------
+# Сначала объявляем таблицу favorites
+favorites = db.Table('favorites',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True)
+)
+
+# Теперь класс User, который ссылается на favorites уже будет знать, что это такое
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
@@ -13,15 +17,11 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(10), default='user')  # user/admin
+    favorites = db.relationship('Product', secondary=favorites, backref='favorited_by')
     
-    # Связи: favorites, reviews, orders
-
     def __repr__(self):
         return f'<User {self.username}>'
 
-# -------------------------------------------------------------------
-# Модель товара
-# -------------------------------------------------------------------
 class Product(db.Model):
     __tablename__ = 'products'
     
@@ -29,28 +29,16 @@ class Product(db.Model):
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=True)
     price = db.Column(db.Float, nullable=False)
-    category = db.Column(db.String(50), nullable=True)   # например: "chair", "table", "sofa" и т.д.
+    category = db.Column(db.String(50), nullable=True)
     color = db.Column(db.String(50), nullable=True)
     material = db.Column(db.String(50), nullable=True)
-    image_url = db.Column(db.String(255), nullable=True) # ссылка на фото
+    image_url = db.Column(db.String(255), nullable=True)
     rating = db.Column(db.Float, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f'<Product {self.name}>'
 
-# -------------------------------------------------------------------
-# Модель "Избранное" (Favorites)
-# -------------------------------------------------------------------
-# Связь многие-ко-многим между User и Product
-favorites = db.Table('favorites',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True)
-)
-
-# -------------------------------------------------------------------
-# Модель корзины (CartItem)
-# -------------------------------------------------------------------
 class CartItem(db.Model):
     __tablename__ = 'cart_items'
     
@@ -65,9 +53,6 @@ class CartItem(db.Model):
     def __repr__(self):
         return f'<CartItem user={self.user_id} product={self.product_id} qty={self.quantity}>'
 
-# -------------------------------------------------------------------
-# Модель отзывов
-# -------------------------------------------------------------------
 class Review(db.Model):
     __tablename__ = 'reviews'
 
@@ -84,15 +69,12 @@ class Review(db.Model):
     def __repr__(self):
         return f'<Review user={self.user_id} product={self.product_id} rating={self.rating}>'
 
-# -------------------------------------------------------------------
-# Модель заказов (Order, OrderItem)
-# -------------------------------------------------------------------
 class Order(db.Model):
     __tablename__ = 'orders'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    status = db.Column(db.String(20), default='processing')  # processing / shipped / delivered
+    status = db.Column(db.String(20), default='processing')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user = db.relationship('User', backref='orders')

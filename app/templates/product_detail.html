@@ -1,24 +1,25 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>{{ product.name }}</h2>
-<p>{{ product.description }}</p>
+<img src="{{ product.image_url }}" alt="{{ product.name }}" style="width:200px;">
+
 <p>Цена: {{ product.price }} руб.</p>
+<p>Категория: {{ product.category }} | Цвет: {{ product.color }} | Материал: {{ product.material }}</p>
+<p>Рейтинг: {{ avg_rating|round(1) }} / 5</p>
 
-<form method="POST" action="{{ url_for('main_bp.add_to_cart', product_id=product.id) }}">
-    Количество: <input type="number" name="quantity" value="1" min="1">
-    <button type="submit">В корзину</button>
-</form>
-
-<form method="POST" action="{{ url_for('main_bp.add_favorite', product_id=product.id) }}">
-    <button type="submit">В избранное</button>
-</form>
-
-<h3>Отзывы</h3>
-<ul>
-  {% for review in reviews %}
-    <li>Рейтинг: {{ review.rating }} — {{ review.comment }}</li>
-  {% endfor %}
-</ul>
+<h3>Отзывы:</h3>
+{% if reviews %}
+    <ul>
+    {% for review in reviews %}
+        <li>
+            Рейтинг: {{ review.rating }} — {{ review.comment }}<br>
+            Автор: {{ review.user.username }} | Дата: {{ review.created_at }}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>Отзывов ещё нет. Будьте первым!</p>
+{% endif %}
 
 {% if current_user.is_authenticated %}
 <h4>Оставить отзыв</h4>
@@ -28,7 +29,10 @@
     <textarea name="comment" rows="4" cols="50"></textarea><br>
     <button type="submit">Отправить</button>
 </form>
+<form method="POST" action="{{ url_for('main_bp.add_favorite', product_id=product.id) }}">
+  <button type="submit">Добавить в избранное</button>
+</form>
 {% else %}
-<p>Чтобы оставить отзыв, войдите в систему.</p>
+<p>Чтобы оставить отзыв, <a href="{{ url_for('main_bp.login') }}">войдите в систему</a>.</p>
 {% endif %}
 {% endblock %}

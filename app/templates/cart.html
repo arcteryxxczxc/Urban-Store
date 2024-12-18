@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <h2>Моя корзина</h2>
 {% if cart_items %}
-<table>
+<table id="cart-table">
   <tr>
     <th>Товар</th>
     <th>Цена</th>
@@ -11,22 +12,36 @@
     <th>Действие</th>
   </tr>
   {% for item in cart_items %}
-  <tr>
+  <tr data-cart-item-id="{{ item.id }}">
     <td>{{ item.product.name }}</td>
-    <td>{{ item.product.price }}</td>
-    <td>{{ item.quantity }}</td>
-    <td>{{ item.product.price * item.quantity }}</td>
+    <td class="item-price">{{ item.product.price }}</td>
+    <td class="item-quantity">
+        <button class="quantity-decrease">-</button>
+        <span class="quantity-value">{{ item.quantity }}</span>
+        <button class="quantity-increase">+</button>
+    </td>
+    <td class="item-total">{{ item.product.price * item.quantity }}</td>
     <td>
-      <form method="POST" action="{{ url_for('main_bp.remove_from_cart', cart_item_id=item.id) }}">
-        <button type="submit">Удалить</button>
-      </form>
+      <button class="remove-item">Удалить</button>
     </td>
   </tr>
   {% endfor %}
 </table>
-<p>Общая сумма: {{ total }} руб.</p>
-<a href="#">Оформить заказ</a>
+<p>Общая сумма: <span id="cart-total">{{ total }}</span> руб.</p>
+
+<form method="POST" action="{{ url_for('main_bp.checkout') }}">
+    <button type="submit">Оформить заказ</button>
+</form>
+
 {% else %}
 <p>Корзина пуста.</p>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const updateQuantityUrl = "{{ url_for('main_bp.update_quantity') }}";
+    const removeItemUrl = "{{ url_for('main_bp.remove_item') }}";
+</script>
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 {% endblock %}
