@@ -2,13 +2,13 @@ from . import db
 from flask_login import UserMixin
 from datetime import datetime
 
-# Сначала объявляем таблицу favorites
+# Define the favorites table first
 favorites = db.Table('favorites',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True)
 )
 
-# Теперь класс User, который ссылается на favorites уже будет знать, что это такое
+# User model, referencing favorites
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
@@ -35,6 +35,7 @@ class Product(db.Model):
     image_url = db.Column(db.String(255), nullable=True)
     rating = db.Column(db.Float, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    stock_quantity = db.Column(db.Integer, default=0)
 
     def __repr__(self):
         return f'<Product {self.name}>'

@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Админ-панель</h2>
+<h2>Admin Dashboard</h2>
 <ul>
-    <li>Пользователи: {{ total_users }}</li>
-    <li>Товары: {{ total_products }}</li>
-    <li>Заказы: {{ total_orders }}</li>
+    <li>Users: {{ total_users }}</li>
+    <li>Products: {{ total_products }}</li>
+    <li>Orders: {{ total_orders }}</li>
 </ul>
-<a href="{{ url_for('admin_bp.admin_products') }}">Управление товарами</a> |
-<a href="{{ url_for('admin_bp.admin_orders') }}">Управление заказами</a>
-<a href="{{ url_for('admin_bp.order_reports') }}">Отчёты по заказам</a>
-<a href="{{ url_for('admin_bp.product_reports') }}">Отчёты по товарам</a>
+<a href="{{ url_for('admin_bp.admin_products') }}">Manage Products</a> |
+<a href="{{ url_for('admin_bp.admin_orders') }}">Manage Orders</a>
+<a href="{{ url_for('admin_bp.order_reports') }}">Order Reports</a>
+<a href="{{ url_for('admin_bp.product_reports') }}">Product Reports</a>
 {% endblock %}

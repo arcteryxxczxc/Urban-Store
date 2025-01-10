@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Furniture Shop</title>
@@ -7,20 +7,20 @@
 </head>
 <body>
     <nav>
-        <a href="{{ url_for('main_bp.index') }}">Главная</a>
-        <a href="{{ url_for('main_bp.product_list') }}">Товары</a>
+        <a href="{{ url_for('main_bp.index') }}">Home</a>
+        <a href="{{ url_for('main_bp.product_list') }}">Products</a>
         {% if current_user.is_authenticated %}
             {% if current_user.role == 'admin' %}
-                <a href="{{ url_for('admin_bp.dashboard') }}">Админ-панель</a>
+                <a href="{{ url_for('admin_bp.dashboard') }}">Admin Dashboard</a>
             {% else %}
-                <a href="{{ url_for('main_bp.cart') }}">Корзина</a>
-                <a href="{{ url_for('main_bp.my_orders') }}">Мои заказы</a>
-                <a href="{{ url_for('main_bp.favorites_list') }}">Избранное</a>
+                <a href="{{ url_for('main_bp.cart') }}">Cart</a>
+                <a href="{{ url_for('main_bp.my_orders') }}">My Orders</a>
+                <a href="{{ url_for('main_bp.favorites_list') }}">Favorites</a>
             {% endif %}
-            <a href="{{ url_for('main_bp.logout') }}">Выйти ({{ current_user.username }})</a>
+            <a href="{{ url_for('main_bp.logout') }}">Logout ({{ current_user.username }})</a>
         {% else %}
-            <a href="{{ url_for('main_bp.login') }}">Вход</a>
-            <a href="{{ url_for('main_bp.register') }}">Регистрация</a>
+            <a href="{{ url_for('main_bp.login') }}">Login</a>
+            <a href="{{ url_for('main_bp.register') }}">Register</a>
         {% endif %}
     </nav>
     

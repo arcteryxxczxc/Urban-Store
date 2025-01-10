@@ -21,4 +21,5 @@ class ProductForm(FlaskForm):
     category = StringField('Category')
     color = StringField('Color')
     material = StringField('Material')
+    stock_quantity = IntegerField('Stock Quantity', validators=[NumberRange(min=0)])
     submit = SubmitField('Save')

@@ -7,10 +7,10 @@ from .forms import ProductForm
 admin_bp = Blueprint('admin_bp', __name__)
 
 def admin_required(func):
-    """Декоратор для проверки роли 'admin'."""
+    """Decorator to check for 'admin' role."""
     def wrapper(*args, **kwargs):
         if not current_user.is_authenticated or current_user.role != 'admin':
-            flash('Доступ запрещён: недостаточно прав.')
+            flash('Access denied: insufficient permissions.')
             return redirect(url_for('main_bp.index'))
         return func(*args, **kwargs)
     wrapper.__name__ = func.__name__
@@ -47,12 +47,14 @@ def add_product():
             price=form.price.data,
             category=form.category.data,
             color=form.color.data,
-            material=form.material.data
+            material=form.material.data,
+            stock_quantity=form.stock_quantity.data or 0
         )
         db.session.add(product)
         db.session.commit()
-        flash('Товар добавлен.')
+        flash('Product added.')
         return redirect(url_for('admin_bp.admin_products'))
+
     return render_template('admin_products.html', form=form, mode='add')
 
 @admin_bp.route('/products/edit/<int:product_id>', methods=['GET', 'POST'])
@@ -68,8 +70,9 @@ def edit_product(product_id):
         product.category = form.category.data
         product.color = form.color.data
         product.material = form.material.data
+        product.stock_quantity = form.stock_quantity.data
         db.session.commit()
-        flash('Товар обновлён.')
+        flash('Product updated.')
         return redirect(url_for('admin_bp.admin_products'))
     return render_template('admin_products.html', form=form, product=product, mode='edit')
 
@@ -80,7 +83,7 @@ def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
     db.session.delete(product)
     db.session.commit()
-    flash('Товар удалён.')
+    flash('Product deleted.')
     return redirect(url_for('admin_bp.admin_products'))
 
 @admin_bp.route('/orders')
@@ -98,7 +101,7 @@ def update_order_status(order_id):
     order = Order.query.get_or_404(order_id)
     order.status = new_status
     db.session.commit()
-    flash('Статус заказа обновлён.')
+    flash('Order status updated.')
     return redirect(url_for('admin_bp.admin_orders'))
 
 @admin_bp.route('/reports/orders')

@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Моя корзина</h2>
+<h2>My Cart</h2>
 {% if cart_items %}
 <table id="cart-table">
   <tr>
-    <th>Товар</th>
-    <th>Цена</th>
-    <th>Количество</th>
-    <th>Всего</th>
-    <th>Действие</th>
+    <th>Product</th>
+    <th>Price</th>
+    <th>Quantity</th>
+    <th>Total</th>
+    <th>Action</th>
   </tr>
   {% for item in cart_items %}
   <tr data-cart-item-id="{{ item.id }}">
@@ -22,19 +22,19 @@
     </td>
     <td class="item-total">{{ item.product.price * item.quantity }}</td>
     <td>
-      <button class="remove-item">Удалить</button>
+      <button class="remove-item">Remove</button>
     </td>
   </tr>
   {% endfor %}
 </table>
-<p>Общая сумма: <span id="cart-total">{{ total }}</span> руб.</p>
+<p>Total Amount: <span id="cart-total">{{ total }}</span> UZS</p>
 
 <form method="POST" action="{{ url_for('main_bp.checkout') }}">
-    <button type="submit">Оформить заказ</button>
+    <button type="submit">Checkout</button>
 </form>
 
 {% else %}
-<p>Корзина пуста.</p>
+<p>The cart is empty.</p>
 {% endif %}
 {% endblock %}
 

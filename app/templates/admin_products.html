@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Админ: товары</h2>
+<h2>Admin: Products</h2>
 
 {% if mode == 'add' %}
-<h3>Добавить товар</h3>
+<h3>Add Product</h3>
 <form method="POST" action="{{ url_for('admin_bp.add_product') }}">
     {{ form.hidden_tag() }}
     <p>{{ form.name.label }}<br>{{ form.name }}</p>
@@ -12,10 +12,11 @@
     <p>{{ form.category.label }}<br>{{ form.category }}</p>
     <p>{{ form.color.label }}<br>{{ form.color }}</p>
     <p>{{ form.material.label }}<br>{{ form.material }}</p>
+    <p>{{ form.stock_quantity.label }}<br>{{ form.stock_quantity }}</p>
     <p>{{ form.submit }}</p>
 </form>
 {% elif mode == 'edit' %}
-<h3>Редактировать товар</h3>
+<h3>Edit Product</h3>
 <form method="POST" action="{{ url_for('admin_bp.edit_product', product_id=product.id) }}">
     {{ form.hidden_tag() }}
     <p>{{ form.name.label }}<br>{{ form.name }}</p>
@@ -27,15 +28,15 @@
     <p>{{ form.submit }}</p>
 </form>
 {% else %}
-<h3>Список товаров</h3>
-<a href="{{ url_for('admin_bp.add_product') }}">Добавить товар</a>
+<h3>Product List</h3>
+<a href="{{ url_for('admin_bp.add_product') }}">Add Product</a>
 <table border="1">
     <tr>
         <th>ID</th>
-        <th>Название</th>
-        <th>Цена</th>
-        <th>Категория</th>
-        <th>Действия</th>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Category</th>
+        <th>Actions</th>
     </tr>
     {% for p in products %}
     <tr>
@@ -44,9 +45,9 @@
         <td>{{ p.price }}</td>
         <td>{{ p.category }}</td>
         <td>
-            <a href="{{ url_for('admin_bp.edit_product', product_id=p.id) }}">Редактировать</a> | 
+            <a href="{{ url_for('admin_bp.edit_product', product_id=p.id) }}">Edit</a> | 
             <form action="{{ url_for('admin_bp.delete_product', product_id=p.id) }}" method="POST" style="display:inline;">
-                <button type="submit" onclick="return confirm('Удалить товар?');">Удалить</button>
+                <button type="submit" onclick="return confirm('Delete product?');">Delete</button>
             </form>
         </td>
     </tr>
