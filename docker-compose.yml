@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  jenkins:
+    build:
+      context: ./jenkins-setup # Use custom Jenkins setup directory
+    container_name: jenkins
+    user: root # Run Jenkins as root for elevated permissions
+    ports:
+      - "8080:8080" # Map local port 8080 to Jenkins UI port
+      - "50000:50000" # Port for Jenkins agents
+    volumes:
+      - jenkins_home:/var/jenkins_home # Persist Jenkins data
+      - ./jenkins-setup/scripts:/usr/share/jenkins/ref/init.groovy.d # Pre-configure Jenkins with scripts
+      - ./jenkins-setup/plugins.txt:/usr/share/jenkins/ref/plugins.txt # Preload plugins
+      - /var/run/docker.sock:/var/run/docker.sock # Allow Jenkins to access Docker
+    networks:
+      - app_network # Shared network for services
+
+  flask_app:
+    build:
+      context: . # Build Flask app from the current directory
+      dockerfile: Dockerfile
+    container_name: flask_app
+    ports:
+      - "5000:5000" # Map local port 5000 to Flask app
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_PATH=/data/database.db # Path to SQLite database
+    volumes:
+      - sqlite_data:/data # Shared volume for SQLite database
+    networks:
+      - app_network # Shared network for services
+
+  db:
+    image: nouchka/sqlite3 # Lightweight SQLite image
+    container_name: sqlite_container
+    volumes:
+      - sqlite_data:/data # Shared volume for SQLite database
+    networks:
+      - app_network # Shared network for services
+
+networks:
+  app_network:
+    driver: bridge # Bridge network to connect all services
+
+volumes:
+  jenkins_home: # Volume to persist Jenkins data
+  sqlite_data: # Volume to persist SQLite database

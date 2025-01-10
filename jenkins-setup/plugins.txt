@@ -1,0 +1,8 @@
+pipeline:2.6
+git:5.0.2
+github:1.36.0
+docker-workflow:563.vd5d2e5c4007f
+workflow-aggregator:2.7
+credentials:2.6.3
+plain-credentials:1.8
+# Это базовый набор для работы с пайплайнами, GitHub и Docker. Вы можете добавить другие плагины, если потребуется.
